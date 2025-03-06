@@ -132,6 +132,11 @@ def custom_model_init(
 
     return custom_model
 
+def change_abandon_to_text(result):
+    for item in result:
+        if item['category_id'] == 2:
+            item['category_id'] = 1
+    return result
 
 def doc_analyze(
     dataset: Dataset,
@@ -199,6 +204,7 @@ def doc_analyze(
         for index in range(len(dataset)):
             if start_page_id <= index <= end_page_id:
                 result = analyze_result.pop(0)
+                change_abandon_to_text(result)
                 page_width, page_height = page_wh_list.pop(0)
             else:
                 result = []
@@ -221,6 +227,7 @@ def doc_analyze(
             if start_page_id <= index <= end_page_id:
                 page_start = time.time()
                 result = custom_model(img)
+                result = change_abandon_to_text(result)
                 logger.info(f'-----page_id : {index}, page total time: {round(time.time() - page_start, 2)}-----')
             else:
                 result = []
