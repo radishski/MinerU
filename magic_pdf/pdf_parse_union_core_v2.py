@@ -806,6 +806,7 @@ def parse_page_core(
 
     """获取所有的spans信息"""
     spans = magic_model.get_all_spans(page_id)
+    all_spans = copy.deepcopy(spans)
 
     """在删除重复span之前，应该通过image_body和table_body的block过滤一下image和table的span"""
     """顺便删除大水印并保留abandon的span"""
@@ -903,7 +904,7 @@ def parse_page_core(
         need_drop,
         drop_reason,
     )
-    return page_info
+    return page_info, all_spans
 
 
 def pdf_parse_union(
@@ -921,6 +922,7 @@ def pdf_parse_union(
 
     """初始化空的pdf_info_dict"""
     pdf_info_dict = {}
+    span_info_dict = {}
 
     """用model_list和docs对象初始化magic_model"""
     magic_model = MagicModel(model_list, dataset)
@@ -950,7 +952,7 @@ def pdf_parse_union(
 
         """解析pdf中的每一页"""
         if start_page_id <= page_id <= end_page_id:
-            page_info = parse_page_core(
+            page_info, all_spans = parse_page_core(
                 page, magic_model, page_id, pdf_bytes_md5, imageWriter, parse_mode, lang
             )
         else:
@@ -961,6 +963,7 @@ def pdf_parse_union(
                 [], [], page_id, page_w, page_h, [], [], [], [], [], True, 'skip page'
             )
         pdf_info_dict[f'page_{page_id}'] = page_info
+        span_info_dict[f'page_{page_id}'] = all_spans
 
     # PerformanceStats.print_stats()
 
@@ -996,6 +999,7 @@ def pdf_parse_union(
     pdf_info_list = dict_to_list(pdf_info_dict)
     new_pdf_info_dict = {
         'pdf_info': pdf_info_list,
+        'all_spans': dict_to_list(span_info_dict),
     }
 
     clean_memory(get_device())
