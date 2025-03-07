@@ -1,0 +1,2 @@
+include magic_pdf/resources/*
+recursive-include magic_pdf/resources *
