@@ -39,7 +39,7 @@ if __name__ == '__main__':
                     "paddlepaddle==3.0.0b1;platform_system=='Linux'",
                     "paddlepaddle==2.6.1;platform_system=='Windows' or platform_system=='Darwin'",
             ],
-            "full": [
+            "full": [  # 这里看依赖
                      "matplotlib>=3.10,<4",
                      "ultralytics>=8.3.48,<9",  # yolov8,公式检测
                      "doclayout_yolo==0.0.2b1",  # doclayout_yolo

@@ -22,6 +22,7 @@ from magic_pdf.libs.config_reader import (get_device, get_formula_config,
                                           get_local_models_dir,
                                           get_table_recog_config)
 from magic_pdf.model.model_list import MODEL
+import cv2
 
 class ModelSingleton:
     _instance = None
@@ -40,6 +41,7 @@ class ModelSingleton:
         layout_model=None,
         formula_enable=None,
         table_enable=None,
+        contrast_alpha=1.0,
     ):
         key = (ocr, show_log, lang, layout_model, formula_enable, table_enable)
         if key not in self._models:
@@ -50,6 +52,7 @@ class ModelSingleton:
                 layout_model=layout_model,
                 formula_enable=formula_enable,
                 table_enable=table_enable,
+                contrast_alpha=contrast_alpha,
             )
         return self._models[key]
 
@@ -61,6 +64,7 @@ def custom_model_init(
     layout_model=None,
     formula_enable=None,
     table_enable=None,
+    contrast_alpha=1.0,
 ):
     model = None
     if model_config.__model_mode__ == 'lite':
@@ -106,6 +110,7 @@ def custom_model_init(
                 'layout_config': layout_config,
                 'formula_config': formula_config,
                 'lang': lang,
+                'contrast_alpha': contrast_alpha,
             }
 
             custom_model = CustomPEKModel(**model_input)
@@ -130,6 +135,7 @@ def doc_analyze(
     layout_model=None,
     formula_enable=None,
     table_enable=None,
+    contrast_alpha=1.0,  # 对比度增强的alpha值
 ):
     end_page_id = (
         end_page_id
@@ -144,7 +150,16 @@ def doc_analyze(
         if start_page_id <= index <= end_page_id:
             page_data = dataset.get_page(index)
             img_dict = page_data.get_image()
-            images.append(img_dict['img'])
+
+            # 源代码
+            # images.append(img_dict['img'])
+
+            # 调整后代码
+            adjust_img = img_dict['img']
+            if contrast_alpha != 1.0:
+                adjust_img = cv2.convertScaleAbs(adjust_img, alpha=contrast_alpha, beta=0.0)
+            images.append(adjust_img)
+
             page_wh_list.append((img_dict['width'], img_dict['height']))
 
     images_with_extra_info = [(images[index], ocr, dataset._lang) for index in range(len(images))]
@@ -160,7 +175,7 @@ def doc_analyze(
     for index, batch_image in enumerate(batch_images):
         processed_images_count += len(batch_image)
         logger.info(f'Batch {index + 1}/{len(batch_images)}: {processed_images_count} pages/{len(images_with_extra_info)} pages')
-        result = may_batch_image_analyze(batch_image, ocr, show_log,layout_model, formula_enable, table_enable)
+        result = may_batch_image_analyze(batch_image, ocr, show_log,layout_model, formula_enable, table_enable, contrast_alpha)
         results.extend(result)
 
     model_json = []
@@ -245,7 +260,8 @@ def may_batch_image_analyze(
         show_log: bool = False,
         layout_model=None,
         formula_enable=None,
-        table_enable=None):
+        table_enable=None,
+        contrast_alpha=1.0):
     # os.environ['CUDA_VISIBLE_DEVICES'] = str(idx)
 
     from magic_pdf.model.batch_analyze import BatchAnalyze
@@ -284,7 +300,7 @@ def may_batch_image_analyze(
 
     # doc_analyze_start = time.time()
 
-    batch_model = BatchAnalyze(model_manager, batch_ratio, show_log, layout_model, formula_enable, table_enable)
+    batch_model = BatchAnalyze(model_manager, batch_ratio, show_log, layout_model, formula_enable, table_enable, contrast_alpha)
     results = batch_model(images_with_extra_info)
 
     # gc_start = time.time()

@@ -64,6 +64,7 @@ class CustomPEKModel:
         # ocr config
         self.apply_ocr = ocr
         self.lang = kwargs.get('lang', None)
+        self.contrast_alpha = kwargs.get('contrast_alpha', 1.0)  # 对比度
 
         logger.info(
             'DocAnalysis init, this may take some times, layout_model: {}, apply_formula: {}, apply_ocr: {}, '
@@ -74,6 +75,7 @@ class CustomPEKModel:
                 self.apply_table,
                 self.table_model_name,
                 self.lang,
+                self.contrast_alpha,
             )
         )
         # 初始化解析方案
@@ -208,7 +210,11 @@ class CustomPEKModel:
             new_image = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
 
             if self.apply_ocr:
-                ocr_res = self.ocr_model.ocr(new_image, mfd_res=adjusted_mfdetrec_res)[0]
+                ocr_image = new_image
+                # 调整对比度
+                if self.contrast_alpha != 1.0:
+                    ocr_image = cv2.convertScaleAbs(new_image, alpha=self.contrast_alpha, beta=0)
+                ocr_res = self.ocr_model.ocr(ocr_image, mfd_res=adjusted_mfdetrec_res)[0]
             else:
                 ocr_res = self.ocr_model.ocr(new_image, mfd_res=adjusted_mfdetrec_res, rec=False)[0]
 

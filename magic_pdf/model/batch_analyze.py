@@ -16,13 +16,14 @@ MFR_BASE_BATCH_SIZE = 16
 
 
 class BatchAnalyze:
-    def __init__(self, model_manager, batch_ratio: int, show_log, layout_model, formula_enable, table_enable):
+    def __init__(self, model_manager, batch_ratio: int, show_log, layout_model, formula_enable, table_enable, contrast_alpha):
         self.model_manager = model_manager
         self.batch_ratio = batch_ratio
         self.show_log = show_log
         self.layout_model = layout_model
         self.formula_enable = formula_enable
         self.table_enable = table_enable
+        self.contrast_alpha = contrast_alpha
 
     def __call__(self, images_with_extra_info: list) -> list:
         if len(images_with_extra_info) == 0:
@@ -37,6 +38,7 @@ class BatchAnalyze:
             layout_model = self.layout_model,
             formula_enable = self.formula_enable,
             table_enable = self.table_enable,
+            contrast_alpha = self.contrast_alpha,
         )
 
         images = [image for image, _, _ in images_with_extra_info]
@@ -205,7 +207,15 @@ class BatchAnalyze:
 
                         # Add to the appropriate language-specific lists
                         need_ocr_lists_by_lang[lang].append(layout_res_item)
+
+                        # 源代码：
                         img_crop_lists_by_lang[lang].append(layout_res_item['np_img'])
+
+                        # 调整后代码：
+                        # adjust_img = layout_res_item['np_img']
+                        # if self.contrast_alpha != 1.0:
+                        #     adjust_img = cv2.convertScaleAbs(adjust_img, alpha=self.contrast_alpha, beta=0.0)
+                        # img_crop_lists_by_lang[lang].append(adjust_img)
 
                         # Remove the fields after adding to lists
                         layout_res_item.pop('np_img')
