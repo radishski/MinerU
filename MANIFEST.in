@@ -1,2 +1,4 @@
 include magic_pdf/resources/*
 recursive-include magic_pdf/resources *
+include magic_pdf.model.sub_modules.ocr.paddleocr2pytorch.pytorchocr.utils.resources/*
+recursive-include magic_pdf.model.sub_modules.ocr.paddleocr2pytorch.pytorchocr.utils.resources/*
